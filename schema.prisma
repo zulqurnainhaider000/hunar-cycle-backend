@@ -1,0 +1,168 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider  = "prisma-client-py"
+  interface = "sync" // Using sync interface for standard Flask routes
+}
+
+model User {
+  id           String   @id @default(uuid())
+  username     String   @unique
+  email        String   @unique
+  passwordHash String
+  level        Int      @default(1)
+  xp           Int      @default(0)
+  coins        Int      @default(0)
+  loginStreak  Int      @default(0)
+  lastLogin    DateTime?
+  totalZenMinutes Int   @default(0)
+  createdAt DateTime @default(now())
+
+  gigs      Gig[]    @relation("PostedGigs")
+  matches1  Matchmaking[] @relation("User1")
+  matches2  Matchmaking[] @relation("User2")
+  acceptedGigs Gig[] @relation("AcceptedGigs")
+
+  createdEvents Event[] @relation("CreatedEvents")
+  attendingEvents Event[] @relation("EventAttendees")
+  
+  createdTurfs Turf[] @relation("CreatedTurfs")
+  memberTurfs Turf[] @relation("TurfMembers")
+}
+
+model Gig {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  category    String   @default("GENERAL") // e.g., DEV, SWAP, DESIGN
+  rewardCoins Int      @default(0)
+  status      String   @default("OPEN")
+  createdAt   DateTime @default(now())
+  
+  posterId    String
+  poster      User     @relation("PostedGigs", fields: [posterId], references: [id])
+  
+  acceptedById String?
+  acceptedBy   User?   @relation("AcceptedGigs", fields: [acceptedById], references: [id])
+}
+
+model Matchmaking {
+  id        String   @id @default(uuid())
+  user1Id   String
+  user2Id   String
+  status    String   @default("PENDING") // PENDING, ACCEPTED, REJECTED
+  
+  user1     User     @relation("User1", fields: [user1Id], references: [id])
+  user2     User     @relation("User2", fields: [user2Id], references: [id])
+}
+
+model DojoEvent {
+  id        String   @id @default(uuid())
+  category  String
+  player1Id String
+  player2Id String
+  winnerId  String?
+  duration  Int      // in seconds
+  createdAt DateTime @default(now())
+}
+
+model Lesson {
+  id          String      @id @default(uuid())
+  title       String
+  category    String
+  description String?
+  color       String      @default("#3B82F6")
+  createdAt   DateTime    @default(now())
+  
+  flashcards  Flashcard[]
+  steps       LessonStep[]
+  quizzes     Quiz[]
+}
+
+model LessonStep {
+  id          String   @id @default(uuid())
+  lessonId    String
+  order       Int      @default(0)
+  title       String
+  content     String
+  codeSnippet String?
+  
+  lesson      Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  flashcards  Flashcard[]
+  quizzes     Quiz[]
+}
+
+model Quiz {
+  id           String      @id @default(uuid())
+  question     String
+  options      String[]
+  correctAnswer String
+  explanation  String?
+  lessonId     String
+  lessonStepId String?
+  createdAt    DateTime    @default(now())
+  
+  lesson       Lesson      @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lessonStep   LessonStep? @relation(fields: [lessonStepId], references: [id], onDelete: Cascade)
+}
+
+model Flashcard {
+  id          String   @id @default(uuid())
+  question    String
+  answer      String
+  lessonId    String
+  lessonStepId String?
+  
+  lesson      Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  lessonStep  LessonStep? @relation(fields: [lessonStepId], references: [id], onDelete: Cascade)
+}
+
+model UserLessonProgress {
+  id          String   @id @default(uuid())
+  userId      String
+  lessonId    String
+  unlockedDay Int      @default(1)
+  updatedAt   DateTime @default(now())
+
+  @@unique([userId, lessonId])
+}
+
+model UserProgress {
+  id          String   @id @default(uuid())
+  userId      String
+  flashcardId String
+  rating      String   // "Hard", "Good", "Easy"
+  nextReview  DateTime @default(now())
+  createdAt   DateTime @default(now())
+}
+
+model Event {
+  id          String   @id @default(uuid())
+  title       String
+  description String
+  location    String
+  date        DateTime
+  color       String   @default("#10B981")
+  createdAt   DateTime @default(now())
+  
+  creatorId   String
+  creator     User     @relation("CreatedEvents", fields: [creatorId], references: [id])
+  
+  attendees   User[]   @relation("EventAttendees")
+}
+
+model Turf {
+  id          String   @id @default(uuid())
+  name        String
+  description String
+  color       String   @default("#8B5CF6")
+  createdAt   DateTime @default(now())
+  
+  creatorId   String
+  creator     User     @relation("CreatedTurfs", fields: [creatorId], references: [id])
+  
+  members     User[]   @relation("TurfMembers")
+}

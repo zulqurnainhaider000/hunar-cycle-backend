@@ -1,0 +1,7 @@
+venv/
+bin/
+__pycache__/
+*.log
+api_logs.txt
+.env
+node_modules/
