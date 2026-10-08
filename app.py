@@ -54,24 +54,68 @@ def create_app():
             "health": "/api/health"
         }), 200
 
-    # Health Check
+    # Health Check with live Database diagnosis
     @app.route('/api/health')
     def health_check():
+        db_status = "unknown"
+        db_err = None
+        user_count = 0
+        try:
+            if not db.is_connected():
+                db.connect()
+            user_count = db.user.count()
+            db_status = f"connected (users: {user_count})"
+        except Exception as e:
+            db_status = "error"
+            db_err = str(e)
+            print(f"[Health Check DB Error] {e}", flush=True)
+
         return jsonify({
-            "status": "healthy", 
+            "status": "healthy" if db_status.startswith("connected") else "db_issue", 
             "service": "HunarCircle API",
+            "database": db_status,
+            "db_error": db_err,
+            "user_count": user_count,
             "message": "Ready to serve Gigs and Dojos!"
         }), 200
+
+    # Auto-migration endpoint for remote cloud database setup
+    @app.route('/api/admin/push-db', methods=['GET', 'POST'])
+    def admin_push_db():
+        import subprocess, sys
+        try:
+            res = subprocess.run([sys.executable, "-m", "prisma", "db", "push", "--accept-data-loss"], capture_output=True, text=True)
+            return jsonify({
+                "success": True,
+                "stdout": res.stdout,
+                "stderr": res.stderr
+            }), 200
+        except Exception as e:
+            return jsonify({"success": False, "error": str(e)}), 500
 
     return app
 
 app = create_app()
 
+_schema_migrated = False
+
 def ensure_db_connected():
+    global _schema_migrated
+    import subprocess, sys
     try:
         if not db.is_connected():
             db.connect()
             print("[Prisma] Database connected successfully.", flush=True)
+
+        if not _schema_migrated:
+            try:
+                db.user.count()
+                _schema_migrated = True
+            except Exception as table_err:
+                print(f"[Prisma] Tables not initialized ({table_err}). Running prisma db push...", flush=True)
+                push_res = subprocess.run([sys.executable, "-m", "prisma", "db", "push", "--accept-data-loss"], capture_output=True, text=True)
+                print(f"[Prisma db push] {push_res.stdout} {push_res.stderr}", flush=True)
+                _schema_migrated = True
     except Exception as e:
         print(f"[Prisma] Database connection status: {e}", flush=True)
 
