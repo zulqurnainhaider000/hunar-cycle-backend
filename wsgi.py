@@ -21,11 +21,11 @@ if __name__ == '__main__':
     if hasattr(_hunar_app, 'free_port_if_in_use'):
         _hunar_app.free_port_if_in_use(port)
     try:
-        socketio.run(app, host='0.0.0.0', port=port, debug=debug)
+        socketio.run(app, host='0.0.0.0', port=port, debug=debug, allow_unsafe_werkzeug=True)
     except OSError as e:
         if "10048" in str(e) and hasattr(_hunar_app, 'free_port_if_in_use'):
             _hunar_app.free_port_if_in_use(port)
-            socketio.run(app, host='0.0.0.0', port=port, debug=debug)
+            socketio.run(app, host='0.0.0.0', port=port, debug=debug, allow_unsafe_werkzeug=True)
         else:
             raise
 
