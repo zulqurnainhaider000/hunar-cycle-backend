@@ -71,8 +71,9 @@ def ensure_db_connected():
     try:
         if not db.is_connected():
             db.connect()
+            print("[Prisma] Database connected successfully.", flush=True)
     except Exception as e:
-        print(f"[Prisma] Database connection status: {e}")
+        print(f"[Prisma] Database connection status: {e}", flush=True)
 
 # Connect Prisma Client synchronously
 ensure_db_connected()

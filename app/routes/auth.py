@@ -18,6 +18,9 @@ def register():
     try:
         email = data['email'].lower()
         
+        if not db.is_connected():
+            db.connect()
+            
         # Pre-check if email already exists
         existing_email = db.user.find_first(where={"email": email})
         if existing_email:
@@ -70,6 +73,10 @@ def login():
         
     try:
         email = data['email'].lower()
+        
+        if not db.is_connected():
+            db.connect()
+            
         user = db.user.find_first(where={"email": email})
         
         if not user or not check_password_hash(user.passwordHash, data['password']):
