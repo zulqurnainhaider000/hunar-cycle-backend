@@ -171,3 +171,12 @@ class UniversalCourseSeeder:
             "quizzes_count": total_quizzes_created,
             "flashcards_count": total_flashcards_created,
         }
+
+
+if __name__ == "__main__":
+    import os
+    backend_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+    if backend_root not in sys.path:
+        sys.path.insert(0, backend_root)
+    from seeder.run_seeder import main
+    main()

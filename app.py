@@ -18,6 +18,10 @@ from app.routes.users import users_bp, user_bp
 from app.routes.zen import zen_bp
 from app.routes.auth import auth_bp
 from app.routes.hub import hub_bp
+from app.routes.admin import admin_bp, admin_web_bp
+from app.routes.announcements import announcements_bp
+from app.routes.economy import economy_bp
+from app.routes.community import community_bp
 # We will assume learn, matches, etc. are still in __init__
 from app.routes import learn_bp, matches_bp
 
@@ -35,11 +39,17 @@ def create_app():
     app.register_blueprint(learn_bp)
     app.register_blueprint(matches_bp)
     app.register_blueprint(hub_bp)
+    app.register_blueprint(community_bp)
     app.register_blueprint(zen_bp)
     app.register_blueprint(lessons_bp)
     app.register_blueprint(courses_bp)
     app.register_blueprint(users_bp)
     app.register_blueprint(user_bp)
+    app.register_blueprint(admin_bp)
+    app.register_blueprint(admin_web_bp)
+    app.register_blueprint(announcements_bp)
+    app.register_blueprint(economy_bp)
+
     
     # Initialize SocketIO with the app
     socketio.init_app(app)
@@ -53,6 +63,55 @@ def create_app():
             "version": "1.0.0",
             "health": "/api/health"
         }), 200
+
+    @app.route('/api/specializations')
+    def get_specializations_root():
+        from app.routes.lessons import fetch_specializations_data
+        return jsonify(fetch_specializations_data()), 200
+
+    def _serve_uni_img(subfolder, filename):
+        from flask import send_from_directory, abort
+        import re
+        target_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'frontend', 'assets', 'images', 'university', subfolder)
+        if os.path.exists(os.path.join(target_dir, filename)):
+            return send_from_directory(target_dir, filename)
+        png_name = re.sub(r'\.(jpeg|jpg|gif|emf)$', '.png', filename, flags=re.IGNORECASE)
+        if os.path.exists(os.path.join(target_dir, png_name)):
+            return send_from_directory(target_dir, png_name)
+        abort(404)
+
+    @app.route('/static/university/itc/<path:filename>')
+    def serve_university_image(filename):
+        return _serve_uni_img('itc', filename)
+
+    @app.route('/static/university/oop/<path:filename>')
+    def serve_university_oop_image(filename):
+        return _serve_uni_img('oop', filename)
+
+    @app.route('/static/university/os/<path:filename>')
+    def serve_university_os_image(filename):
+        return _serve_uni_img('os', filename)
+
+    @app.route('/static/university/os_fall/<path:filename>')
+    def serve_university_os_fall_image(filename):
+        return _serve_uni_img('os_fall', filename)
+
+    @app.route('/static/university/cfp/<path:filename>')
+    def serve_university_cfp_image(filename):
+        return _serve_uni_img('cfp', filename)
+
+    @app.route('/static/university/dsa/<path:filename>')
+    def serve_university_dsa_image(filename):
+        return _serve_uni_img('dsa', filename)
+
+    @app.route('/static/university/ccn/<path:filename>')
+    def serve_university_ccn_image(filename):
+        return _serve_uni_img('ccn', filename)
+
+    @app.route('/static/university/itc_exp/<path:filename>')
+    def serve_university_itc_exp_image(filename):
+        return _serve_uni_img('itc_exp', filename)
+
 
     # Health Check with live Database diagnosis
     @app.route('/api/health')
@@ -100,22 +159,11 @@ app = create_app()
 _schema_migrated = False
 
 def ensure_db_connected():
-    global _schema_migrated
-    import subprocess, sys
     try:
-        if not db.is_connected():
-            db.connect()
-            print("[Prisma] Database connected successfully.", flush=True)
-
-        if not _schema_migrated:
-            try:
-                db.user.count()
-                _schema_migrated = True
-            except Exception as table_err:
-                print(f"[Prisma] Tables not initialized ({table_err}). Running prisma db push...", flush=True)
-                push_res = subprocess.run([sys.executable, "-m", "prisma", "db", "push", "--accept-data-loss"], capture_output=True, text=True)
-                print(f"[Prisma db push] {push_res.stdout} {push_res.stderr}", flush=True)
-                _schema_migrated = True
+        if db.is_connected():
+            return
+        db.connect(timeout=45)
+        print("[Prisma] Database connected successfully.", flush=True)
     except Exception as e:
         print(f"[Prisma] Database connection status: {e}", flush=True)
 
@@ -173,12 +221,12 @@ if __name__ == '__main__':
 
     try:
         # Start the server on dynamic port using socketio to support WebSockets
-        socketio.run(app, host='0.0.0.0', port=port, debug=debug)
+        socketio.run(app, host='0.0.0.0', port=port, debug=debug, allow_unsafe_werkzeug=True)
     except OSError as e:
         if "10048" in str(e):
             print(f"\n[PORT CONFLICT] Port {port} locked by Windows. Force clearing and retrying...")
             free_port_if_in_use(port)
-            socketio.run(app, host='0.0.0.0', port=port, debug=debug)
+            socketio.run(app, host='0.0.0.0', port=port, debug=debug, allow_unsafe_werkzeug=True)
         else:
             raise
 

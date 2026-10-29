@@ -1,6 +1,6 @@
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url      = "postgresql://neondb_owner:npg_VMs6ximrJGF9@ep-noisy-sound-b5z8lptr-pooler.c-7.us-east-2.aws.neon.tech/neondb?sslmode=require&pgbouncer=true&connect_timeout=45"
 }
 
 generator client {
@@ -20,6 +20,18 @@ model User {
   lastLogin    DateTime?
   totalZenMinutes Int   @default(0)
   createdAt DateTime @default(now())
+
+  // Email Verification & OTP Security
+  isVerified      Boolean   @default(false)
+  otpCode         String?
+  otpExpiresAt    DateTime?
+  lastOtpSentAt   DateTime?
+
+  // Profile details
+  avatarUrl       String?
+  location        String?   @default("Islamabad, PK")
+  headline        String?   @default("Creative Technologist & Learner")
+  role            String    @default("student")
 
   gigs      Gig[]    @relation("PostedGigs")
   matches1  Matchmaking[] @relation("User1")
@@ -148,10 +160,41 @@ model Event {
   color       String   @default("#10B981")
   createdAt   DateTime @default(now())
   
+  accessCode     String?  @default("FREE")
+  isLocked       Boolean  @default(false)
+  youtubeVideoId String?
+  status         String   @default("active") // "active", "ended"
+  
   creatorId   String
   creator     User     @relation("CreatedEvents", fields: [creatorId], references: [id])
   
   attendees   User[]   @relation("EventAttendees")
+}
+
+model LiveClass {
+  id                    String   @id @default(uuid())
+  courseTitle           String
+  title                 String
+  instructorName        String
+  instructorTitle       String?
+  instructorAvatar      String?
+  instructorId          String?
+  liveRoomUrl           String?
+  youtubeVideoId        String?
+  accessCode            String?   @default("FREE")
+  isLocked              Boolean   @default(false)
+  status                String    @default("active") // "active", "ended"
+  enrolledCount         String    @default("+60")
+  duration              String    @default("2h+ Hours")
+  tag                   String    @default("Live Class")
+  badgeText             String    @default("Live Class")
+  interactiveBadgeTitle String    @default("Live Interactive")
+  interactiveBadgeSub   String    @default("Q&A+ Feedback")
+  currentTopic          String?
+  description           String?
+  scheduledTime         String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 }
 
 model Turf {
@@ -166,3 +209,26 @@ model Turf {
   
   members     User[]   @relation("TurfMembers")
 }
+
+model Announcement {
+  id        String   @id @default(uuid())
+  title     String
+  message   String
+  type      String   @default("info") // info, warning, success
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model SystemConfig {
+  id                 String   @id @default("default_config")
+  quizPassXp         Int      @default(50)
+  labCompletionXp    Int      @default(100)
+  dailyStreakCoins   Int      @default(10)
+  arenaWinCoins      Int      @default(25)
+  arenaWinXp         Int      @default(30)
+  perfectQuizBonusXp Int      @default(25)
+  updatedAt          DateTime @updatedAt
+}
+
+

@@ -7,6 +7,9 @@ from .routes.gigs import gigs_bp
 from .routes.dojos import dojos_bp
 from .routes.hub import hub_bp
 from .routes.zen import zen_bp
+from .routes.admin import admin_bp, admin_web_bp
+from .routes.announcements import announcements_bp
+from .routes.economy import economy_bp
 
 def create_app():
     app = Flask(__name__)
@@ -22,6 +25,11 @@ def create_app():
     app.register_blueprint(dojos_bp)
     app.register_blueprint(hub_bp)
     app.register_blueprint(zen_bp)
+    app.register_blueprint(admin_bp)
+    app.register_blueprint(admin_web_bp)
+    app.register_blueprint(announcements_bp)
+    app.register_blueprint(economy_bp)
+
     
     @app.route('/api/health')
     def health_check():

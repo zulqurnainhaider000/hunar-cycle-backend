@@ -15,7 +15,7 @@ ALL_60_DAYS = DAYS_1_TO_15 + DAYS_16_TO_30 + DAYS_31_TO_45 + DAYS_46_TO_60
 
 NETWORKING_MASTERY_COURSE_BLUEPRINT = CourseBlueprint(
     title="Computer Networking Basics",
-    category="TECH",
+    category="Networking & IT",
     description=(
         "The comprehensive 60-Day Computer Networking Roadmap. "
         "Enforced universal topic-per-day architecture: Networking Fundamentals (LAN/WAN/MAN/PAN/CAN, Topologies, Transmission Media, Devices), "

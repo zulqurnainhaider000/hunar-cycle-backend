@@ -15,7 +15,7 @@ ALL_40_DAYS = DAYS_1_TO_10 + DAYS_11_TO_20 + DAYS_21_TO_30 + DAYS_31_TO_40
 
 MOBILE_MASTERY_COURSE_BLUEPRINT = CourseBlueprint(
     title="Mobile App Development",
-    category="TECH",
+    category="Mobile Dev",
     description=(
         "The comprehensive 40-Day Mobile App Development Mastery Roadmap. "
         "Enforced universal topic-per-day architecture: App Basics & UI (React Native & Flutter), "
